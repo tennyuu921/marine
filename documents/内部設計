@@ -1,0 +1,61 @@
+フォルダ構造
+
+	[app] 
+		[functions]
+			function.php
+	[bin]
+	[config]
+			db-connect.php
+	[cgi-bin]
+	[documents]
+	[html]
+		[assets]
+			[js]
+			[css]
+	[lib]
+
+ファイル群
+	html/index.php			トップページ		
+	html/bbs.php			交流掲示板
+	html/template.php		テンプレートDLページ
+	html/apply_goods.php	物品申し込みページ
+	html/post.php			お知らせ投稿
+
+関数一覧（functionページ内に記述）
+	index
+		FETCH notice
+		INSERT notice
+		upload file
+		send mail
+	bbs
+		FETCH message
+		FETCH comment
+		INSERT message
+		INSERT comment
+
+DB
+	notice TABLE
+		id int,
+		title char,
+		comment text,
+		addfile char,
+		created date,
+		modified date
+
+	message TABLE
+		id int,
+		title char,
+		comment text,
+		editor char,
+		created date,
+		modified date
+
+	comment TABLE
+		id int,
+		message_id int,
+		title char,
+		comment text,
+		editor char,
+		created date,
+		modified date
+

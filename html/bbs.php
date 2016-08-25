@@ -5,6 +5,9 @@
 	//	データベースへの入力（コメント)
 	//	データベースへの入力（新規投稿）
 
+	//	TODO
+	//	コメントのページネーション
+
 
 	/************************ データベースへの表示処理 ************************/
 
@@ -35,6 +38,8 @@
 		}
 		$page_count = 5;
 		$page_max = floor(count($rows) / $page_count);
+
+
 
 	/************************ データベースへの入力処理（新規コメント） ************************/
 
@@ -93,6 +98,39 @@
 
 		}
 	}
+
+	/************************ コメントの表示処理 ************************/
+
+		//クエリ作成・インサート
+		require("../config/db-connect.php");
+
+		$stmt = $dbh->prepare("
+			SELECT * FROM `comment`
+			ORDER BY id DESC
+		");
+
+		$stmt->execute();
+
+	    while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
+	      $comment_rows[] = $row; 
+	    }
+
+
+		//ページネーション用数値の設定	
+		// $comment_page : 現在のページ
+		// $comment_page_count : 一件あたりで表示する件数
+		// $comment_page_max : 全件取得時のページ数
+
+		if(!empty($_GET['comment_pagenation'])){
+			$comment_page = $_GET['comment_pagenation'];
+		}else{
+			$comment_page = 0;
+		}
+
+		$comment_page_count = 5;
+		$comment_page_max = floor(count($comment_rows) / $comment_page_count);
+
+
 
 	/************************ データベースへの入力処理（新規投稿） ************************/
 
@@ -173,9 +211,19 @@
 		<?php endif; ?>
 
 
-		<?php if($page == $page_max): ?>
 
-			<?php for ($i = $page * $page_count; $i < count($rows) % $page_count + $page * $page_count ; $i++): ?>
+
+		<?php 
+			/* $page_max == $page と、$page_max != $page の２パターン
+					＊ページネーションの最終ページだけ表示する個数が違う */
+
+			if($page == $page_max): 
+		?>
+
+			<?php
+				// $page をベースに、message テーブルのデータを出力
+				for ($i = $page * $page_count; $i < count($rows) % $page_count + $page * $page_count ; $i++): 
+			?>
 
 				<p>投稿ID
 				<?php echo $rows[$i]["id"]; ?>

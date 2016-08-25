@@ -1,54 +1,144 @@
 <?php
 
-	/******** バリデーション  *********/
+	// TODO
+	// 新規コメント
 
-    if (!empty($_POST)) {
 
-    	// titleが空欄＆全角30文字以上、commentが空欄　のエラーメッセージ
+	/************************ データベースへの表示処理 ************************/
 
-        if ($_POST['title'] == '' || $_POST['comment'] == '' || $_POST['editor'] == '') {
-        	$error['input'] = "blank";
-        }else{
-        	$error['input'] = "";        	
-        }
-
-        if (strlen($_POST['title']) >= 90 || strlen($_POST['editor']) >= 90) {
-        	$error['length'] = "too much";
-        }else{
-        	$error['length'] = "";        	
-        }
-
-		/******** データベースへのインサート  *********/
+		//クエリ作成・インサート
 		require("../config/db-connect.php");
 
-		if($error['input'] == "" && $error['length'] == ""){
+		$stmt = $dbh->prepare("
+			SELECT * FROM `message`
+			ORDER BY id DESC
+		");
 
-			//フォームから受け取った値の格納
-			$queli_param[0] = $_POST['title'];
-			$queli_param[1] = $_POST['comment'];
-			$queli_param[2] = "addfile";
+		$stmt->execute();
 
-			//クエリ作成・インサート
-			$stmt = $dbh->prepare("
-				INSERT INTO `message`(
-					`title`, 
-					`comment`, 
-					`editor`, 
-					`created`, 
-					`modified`) 
-				VALUES (
-					?,
-					?,
-					?,
-					NOW(),
-					NOW()
-				)
-		 	");
+	    while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
+	      $rows[] = $row; 
+	    }
 
-			$stmt->execute($queli_param);
 
-	        header('Location:bbs.php');
-	        exit();
+		//ページネーション用数値の設定	
+		// $page : 現在のページ
+		// $page_count : 一件あたりで表示する件数
+		// $page_max : 全件取得時のページ数
+
+		if(!empty($_GET['pagenation'])){
+			$page = $_GET['pagenation'];
+		}else{
+			$page = 0;		
+		}
+		$page_count = 5;
+		$page_max = floor(count($rows) / $page_count);
+
+	/************************ データベースへの入力処理（新規コメント） ************************/
+
+		/******** バリデーション  *********/
+
+	    if (!empty($_POST)) {
+
+	        if ($_POST['comment_title'] == '' || $_POST['comment_comment'] == '' || $_POST['comment_editor'] == '') {
+	        	$error['comment_input'] = "blank";
+	        }else{
+	        	$error['comment_input'] = "";        	
+	        }
+
+	        if (strlen($_POST['comment_title']) >= 90 || strlen($_POST['comment_editor']) >= 90) {
+	        	$error['comment_length'] = "too much";
+	        }else{
+	        	$error['comment_length'] = "";        	
+	        }
+
+			/******** データベースへのインサート  *********/
+			require("../config/db-connect.php");
+
+			if($error['comment_input'] == "" && $error['comment_length'] == ""){
+
+				//フォームから受け取った値の格納
+				$queli_param[0] = $_POST['message_id'];
+				$queli_param[1] = $_POST['comment_title'];
+				$queli_param[2] = $_POST['comment_comment'];
+				$queli_param[3] = $_POST['comment_editor'];
+
+				//クエリ作成・インサート
+				$stmt = $dbh->prepare("
+					INSERT INTO `comment`(
+						`message_id`, 
+						`title`, 
+						`comment`, 
+						`editor`, 
+						`created`, 
+						`modified`) 
+					VALUES (
+						?,
+						?,
+						?,
+						?,
+						NOW(),
+						NOW()
+					)
+			 	");
+
+				$stmt->execute($queli_param);
+
+		        header('Location:bbs_success.html');
+		        exit();
+
+		}
+	}
+
+	/************************ データベースへの入力処理（新規投稿） ************************/
+
+		/******** バリデーション  *********/
+
+	    if (!empty($_POST)) {
+
+	        if ($_POST['title'] == '' || $_POST['comment'] == '' || $_POST['editor'] == '') {
+	        	$error['input'] = "blank";
+	        }else{
+	        	$error['input'] = "";        	
+	        }
+
+	        if (strlen($_POST['title']) >= 90 || strlen($_POST['editor']) >= 90) {
+	        	$error['length'] = "too much";
+	        }else{
+	        	$error['length'] = "";        	
+	        }
+
+			/******** データベースへのインサート  *********/
+			require("../config/db-connect.php");
+
+			if($error['input'] == "" && $error['length'] == ""){
+
+				//フォームから受け取った値の格納
+				$queli_param[0] = $_POST['title'];
+				$queli_param[1] = $_POST['comment'];
+				$queli_param[2] = "addfile";
+
+				//クエリ作成・インサート
+				$stmt = $dbh->prepare("
+					INSERT INTO `message`(
+						`title`, 
+						`comment`, 
+						`editor`, 
+						`created`, 
+						`modified`) 
+					VALUES (
+						?,
+						?,
+						?,
+						NOW(),
+						NOW()
+					)
+			 	");
+
+				$stmt->execute($queli_param);
+
+		        header('Location:bbs_success.html');
+		        exit();
 
 		}
 	}
@@ -62,6 +152,95 @@
 	<meta charset="UTF-8">
 </head>
 	<body>
+
+	<!-- 投稿表示 -->
+		<h3>投稿表示</h3>
+		<?php if($page == $page_max): ?>
+
+			<?php for ($i = $page * $page_count; $i < count($rows) % $page_count + $page * $page_count ; $i++): ?>
+
+				<p>投稿ID
+				<?php echo $rows[$i]["id"]; ?>
+				</p>
+
+				<p>タイトル
+				<?php echo $rows[$i]["title"]; ?>
+				</p>
+
+				<p>投稿内容
+				<?php echo $rows[$i]["comment"]; ?>
+				</p>
+
+				<p>投稿日時
+				<?php echo $rows[$i]["created"]; ?>
+				</p>
+
+				<br>
+
+			<?php endfor; ?>
+
+		<?php else: ?>
+
+			<?php for ($i = $page * $page_count; $i < $page_count + $page * $page_count ; $i++): ?>
+
+				<p>投稿ID
+				<?php echo $rows[$i]["id"]; ?>
+				</p>
+
+				<p>タイトル
+				<?php echo $rows[$i]["title"]; ?>
+				</p>
+
+				<p>投稿内容
+				<?php echo $rows[$i]["comment"]; ?>
+				</p>
+
+				<p>投稿日時
+				<?php echo $rows[$i]["created"]; ?>
+				</p>
+
+				<form method="post">
+
+					<input type="hidden" name="message_id" value="<?php echo($rows[$i]["id"]); ?>">
+
+					<p>タイトル（30文字以内）
+						<br><input type="text" name="comment_title" size="40">
+					</p>
+
+					<p>コメント内容
+						<br><textarea name="comment_comment" rows="4" cols="40"></textarea>
+					</p>
+
+					<p>投稿者
+						<br><input type="text" name="comment_editor" size="10">
+					</p>
+
+					<p>
+						<input type="submit" value="投稿"><input type="reset" value="リセット">
+					</p>
+					
+				</form>
+
+				<br>
+
+			<?php endfor; ?>
+
+		<?php endif; ?>
+
+
+	<!-- ページネーション -->
+		<?php if($page > 0): ?>
+		<?php echo('<a href="?pagenation='. ($page - 1) . '">前へ</a>'); ?>
+		<?php endif; ?>
+
+		<?php if($page < $page_max): ?>
+		<?php echo('<a href="?pagenation='. ($page + 1) . '">次へ</a>'); ?>
+		<?php endif; ?>
+
+
+	<!-- 新規投稿 -->
+		<h3>新規投稿</h3>
+
 		<form method="post">
 
 			<p>タイトル（30文字以内）

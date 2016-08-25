@@ -1,7 +1,9 @@
 <?php
 
-	// TODO
-	// 新規コメント
+	//	OUTLINE
+	//	データベースからのデータ表示
+	//	データベースへの入力（コメント)
+	//	データベースへの入力（新規投稿）
 
 
 	/************************ データベースへの表示処理 ************************/
@@ -38,7 +40,7 @@
 
 		/******** バリデーション  *********/
 
-	    if (!empty($_POST)) {
+	    if (!empty($_POST) && ($_POST['type'] == "comment")) {
 
 	        if ($_POST['comment_title'] == '' || $_POST['comment_comment'] == '' || $_POST['comment_editor'] == '') {
 	        	$error['comment_input'] = "blank";
@@ -62,6 +64,8 @@
 				$queli_param[1] = $_POST['comment_title'];
 				$queli_param[2] = $_POST['comment_comment'];
 				$queli_param[3] = $_POST['comment_editor'];
+
+				var_dump($_POST);
 
 				//クエリ作成・インサート
 				$stmt = $dbh->prepare("
@@ -94,7 +98,7 @@
 
 		/******** バリデーション  *********/
 
-	    if (!empty($_POST)) {
+	    if (!empty($_POST) && ($_POST['type'] == "message")) {
 
 	        if ($_POST['title'] == '' || $_POST['comment'] == '' || $_POST['editor'] == '') {
 	        	$error['input'] = "blank";
@@ -155,6 +159,20 @@
 
 	<!-- 投稿表示 -->
 		<h3>投稿表示</h3>
+
+		<?php if(isset($error)) : ?>
+			<?php if($error['comment_length'] == "too much"): ?>
+				<p style="color:red;">タイトル・投稿者は30文字以内で入力してください。</p>
+			<?php endif; ?>
+		<?php endif; ?>
+
+		<?php if(isset($error)) : ?>
+			<?php if($error['comment_input'] == "blank") : ?>
+				<p style="color:red;">タイトル・投稿内容・投稿者を全て入力してください。</p>
+			<?php endif; ?>
+		<?php endif; ?>
+
+
 		<?php if($page == $page_max): ?>
 
 			<?php for ($i = $page * $page_count; $i < count($rows) % $page_count + $page * $page_count ; $i++): ?>
@@ -174,6 +192,30 @@
 				<p>投稿日時
 				<?php echo $rows[$i]["created"]; ?>
 				</p>
+
+				<form method="post">
+
+					<input type="hidden" name="type" value="comment">
+
+					<input type="hidden" name="message_id" value="<?php echo($rows[$i]["id"]); ?>">
+
+					<p>タイトル（30文字以内）
+						<br><input type="text" name="comment_title" size="40">
+					</p>
+
+					<p>コメント内容
+						<br><textarea name="comment_comment" rows="4" cols="40"></textarea>
+					</p>
+
+					<p>投稿者
+						<br><input type="text" name="comment_editor" size="10">
+					</p>
+
+					<p>
+						<input type="submit" value="投稿"><input type="reset" value="リセット">
+					</p>
+					
+				</form>
 
 				<br>
 
@@ -200,6 +242,8 @@
 				</p>
 
 				<form method="post">
+
+					<input type="hidden" name="type" value="comment">
 
 					<input type="hidden" name="message_id" value="<?php echo($rows[$i]["id"]); ?>">
 
@@ -242,6 +286,8 @@
 		<h3>新規投稿</h3>
 
 		<form method="post">
+
+			<input type="hidden" name="type" value="message">
 
 			<p>タイトル（30文字以内）
 				<br><input type="text" name="title" size="40">

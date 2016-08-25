@@ -2,12 +2,11 @@
 
 	// TODO
 	// - デザイン
-	// - ページネーションの実装（数値を表示するところが未了）
 	// - カレンダーを追加
 
+	//クエリ作成・インサート
 	require("../config/db-connect.php");
 
-	//クエリ作成・インサート
 	$stmt = $dbh->prepare("
 		SELECT * FROM `notice`
 		ORDER BY id DESC
